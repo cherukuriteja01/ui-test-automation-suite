@@ -1,0 +1,8 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd" >
+<suite name="Login Test Suite">
+    <test name="Login Tests">
+        <classes>
+            <class name="org.example.tests.LoginTest"/> <!-- ✅ Correct package -->
+        </classes>
+    </test>
+</suite>
