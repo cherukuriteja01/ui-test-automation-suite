@@ -1,0 +1,161 @@
+name: Auto Update README
+
+on:
+  push:
+    branches: [ main ]
+
+permissions:
+  contents: write
+
+jobs:
+  update-readme:
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Collect stats from source code
+        id: stats
+        run: |
+          TESTS=$(grep -r "@Test" src/test/java --include="*.java" | wc -l | tr -d ' ')
+          echo "tests=$TESTS" >> $GITHUB_OUTPUT
+          FILES=$(find src/test/java -name "*Test.java" | wc -l | tr -d ' ')
+          echo "files=$FILES" >> $GITHUB_OUTPUT
+          echo "date=$(git log -1 --format='%d %b %Y')" >> $GITHUB_OUTPUT
+          echo "commit=$(git log -1 --pretty=%B | head -1)" >> $GITHUB_OUTPUT
+
+      - name: Detect day modules
+        id: days
+        run: |
+          check() {
+            [ -f "src/test/java/org/example/tests/$1" ] \
+              && echo "✅ Complete" || echo "🔜 Coming"
+          }
+          echo "login=$(check LoginTest.java)"         >> $GITHUB_OUTPUT
+          echo "signup=$(check SignupTest.java)"       >> $GITHUB_OUTPUT
+          echo "inventory=$(check InventoryTest.java)" >> $GITHUB_OUTPUT
+          echo "cart=$(check CartTest.java)"           >> $GITHUB_OUTPUT
+          echo "checkout=$(check CheckoutTest.java)"   >> $GITHUB_OUTPUT
+
+      - name: Generate README
+        env:
+          TESTS:     ${{ steps.stats.outputs.tests }}
+          FILES:     ${{ steps.stats.outputs.files }}
+          DATE:      ${{ steps.stats.outputs.date }}
+          COMMIT:    ${{ steps.stats.outputs.commit }}
+          LOGIN:     ${{ steps.days.outputs.login }}
+          SIGNUP:    ${{ steps.days.outputs.signup }}
+          INVENTORY: ${{ steps.days.outputs.inventory }}
+          CART:      ${{ steps.days.outputs.cart }}
+          CHECKOUT:  ${{ steps.days.outputs.checkout }}
+        run: |
+          cat > README.md << ENDOFREADME
+          # 🧪 UI Test Automation Suite
+
+          ![Java](https://img.shields.io/badge/Java-17-orange?logo=java)
+          ![Selenium](https://img.shields.io/badge/Selenium-4.21.0-43B02A?logo=selenium)
+          ![TestNG](https://img.shields.io/badge/TestNG-7.10.2-red)
+          ![Tests](https://img.shields.io/badge/Tests-${TESTS}%20Written-brightgreen)
+          ![Updated](https://img.shields.io/badge/Last%20Updated-${DATE// /%20}-blue)
+
+          > Automated UI test suite for [saucedemo.com](https://www.saucedemo.com)
+          > built with **Selenium WebDriver**, **TestNG**, and **Page Object Model**.
+          > Currently **${TESTS} tests** across **${FILES} test files**.
+
+          ---
+
+          ## About
+          - Page Object Model (POM)
+          - Session recovery and failure screenshots
+          - Slow-motion execution with colour-coded highlights
+          - Headless support: \`mvn test -Dheadless=true\`
+          - Auto README via GitHub Actions
+
+          ---
+
+          ## Tech Stack
+          | Tool | Version |
+          |------|---------|
+          | Java | 17 |
+          | Selenium WebDriver | 4.21.0 |
+          | TestNG | 7.10.2 |
+          | Maven | 3.8+ |
+          | GitHub Actions | Auto README |
+
+          ---
+
+          ## How to Run
+          \`\`\`bash
+          mvn test
+          mvn test -Dheadless=true
+          mvn test -Dtest=LoginTest#validLoginTest
+          \`\`\`
+
+          ---
+
+          ## Roadmap
+          | Day | Module | Status |
+          |-----|--------|--------|
+          | Day 1 | Login Tests | ${LOGIN} |
+          | Day 2 | Signup Tests | ${SIGNUP} |
+          | Day 3 | Inventory Tests | ${INVENTORY} |
+          | Day 4 | Cart Tests | ${CART} |
+          | Day 5 | Checkout Tests | ${CHECKOUT} |
+
+          ---
+
+          ## 🤖 Auto-Generated
+          | | |
+          |-|-|
+          | 📅 Last updated | **${DATE}** |
+          | 💬 Last commit | *${COMMIT}* |
+          | 🧪 Total tests | **${TESTS}** |
+          | 📁 Test files | **${FILES}** |
+
+          ---
+
+          **Author: Teja**
+          > ⭐ Star this repo — more modules added daily!
+          ENDOFREADME
+
+      - name: Commit and push README
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add README.md
+          git diff --staged --quiet && echo "No changes" || \
+          git commit -m "🤖 Auto README — ${{ steps.stats.outputs.tests }} tests | ${{ steps.stats.outputs.date }}" && \
+          git push
+```
+
+---
+
+### Step 4 — Scroll down and click
+```
+Commit new file  →  Commit directly to main  →  Commit new file
+```
+
+---
+
+### That's it! ✅ What happens now:
+```
+Every time you push code
+        ↓
+GitHub automatically runs this workflow
+        ↓
+Counts your @Test methods
+        ↓
+Checks which Day files exist
+        ↓
+Rewrites README with live numbers
+        ↓
+Commits README back — you never touch it
+```
+
+You can watch it run live at:
+```
+Your repo → Actions tab → Auto Update README
